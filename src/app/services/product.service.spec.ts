@@ -1,3 +1,4 @@
+import { generateManyProducts } from './../models/product.mock';
 import {
   HttpClientTestingModule,
   HttpTestingController
@@ -28,19 +29,7 @@ describe('ProductService', () => {
 
   describe('test for getAllSimple', () => {
     it('should return a product list', (doneFn) => {
-      const returnProducts: Product[] = [
-        {
-          id: '123',
-          title: 'title',
-          price: 12,
-          description: 'blbla',
-          category: {
-            id: 1,
-            name: 'as',
-          },
-          images: ['img', 'img'],
-        },
-      ];
+      const returnProducts: Product[] = generateManyProducts(2);
 
       productsService.getAllSimple().subscribe((data) => {
         expect(data.length).toEqual(returnProducts.length);
