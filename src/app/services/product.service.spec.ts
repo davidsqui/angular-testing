@@ -1,34 +1,42 @@
-import { HttpStatusCode } from '@angular/common/http';
+import { HttpStatusCode, HTTP_INTERCEPTORS } from '@angular/common/http';
 import {
   HttpClientTestingModule,
-  HttpTestingController
+  HttpTestingController,
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from './../../environments/environment';
+import { TokenInterceptor } from './../interceptors/token.interceptor';
 import {
   generateManyProducts,
-  generateOneProduct
+  generateOneProduct,
 } from './../models/product.mock';
 import {
   CreateProductDTO,
   Product,
-  UpdateProductDTO
+  UpdateProductDTO,
 } from './../models/product.model';
 import { ProductsService } from './product.service';
+import { TokenService } from './token.service';
 
 describe('ProductService', () => {
   let productsService: ProductsService;
   let httpController: HttpTestingController;
+  let tokenService: TokenService;
 
   let apiUrl = `${environment.API_URL}/api/v1`;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [ProductsService],
+      providers: [
+        ProductsService,
+        TokenService,
+        { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true },
+      ],
     });
     productsService = TestBed.inject(ProductsService);
     httpController = TestBed.inject(HttpTestingController);
+    tokenService = TestBed.inject(TokenService);
   });
 
   afterEach(() => {
@@ -43,6 +51,8 @@ describe('ProductService', () => {
     it('should return a product list', (doneFn) => {
       const returnProducts: Product[] = generateManyProducts(2);
 
+      spyOn(tokenService, 'getToken').and.returnValue('123');
+
       productsService.getAllSimple().subscribe((data) => {
         expect(data.length).toEqual(returnProducts.length);
         expect(data).toEqual(returnProducts);
@@ -50,6 +60,9 @@ describe('ProductService', () => {
       });
 
       const req = httpController.expectOne(`${apiUrl}/products`);
+      const headers = req.request.headers;
+
+      expect(headers.get('Authorization')).toEqual(`Bearer 123`)
       req.flush(returnProducts);
     });
   });
@@ -235,6 +248,5 @@ describe('ProductService', () => {
       expect(req.request.url).toContain(id);
       expect(req.request.method).toEqual('GET');
     });
-
   });
 });

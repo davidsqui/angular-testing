@@ -1,7 +1,8 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { TokenInterceptor } from './interceptors/token.interceptor';
 
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { ReactiveFormsModule } from '@angular/forms';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -9,18 +10,16 @@ import { PicoPreviewComponent } from './components/pico-preview/pico-preview.com
 import { ProductsComponent } from './components/products/products.component';
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    ProductsComponent,
-    PicoPreviewComponent
-  ],
+  declarations: [AppComponent, ProductsComponent, PicoPreviewComponent],
   imports: [
     BrowserModule,
     HttpClientModule,
     ReactiveFormsModule,
-    AppRoutingModule
+    AppRoutingModule,
   ],
-  providers: [],
-  bootstrap: [AppComponent]
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true },
+  ],
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}
