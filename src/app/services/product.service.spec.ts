@@ -1,3 +1,4 @@
+import { HttpStatusCode } from '@angular/common/http';
 import {
   HttpClientTestingModule,
   HttpTestingController
@@ -175,5 +176,65 @@ describe('ProductService', () => {
       expect(req.request.url).toContain(id);
       expect(req.request.method).toEqual('DELETE');
     });
+  });
+
+  describe('test for getOne', () => {
+    it('should return a product', (doneFn) => {
+      const returnProduct = generateOneProduct();
+      const id = 'product-1';
+
+      productsService.getOne(id).subscribe((data) => {
+        expect(data).toEqual(returnProduct);
+        doneFn();
+      });
+
+      const req = httpController.expectOne(`${apiUrl}/products/${id}`);
+      req.flush(returnProduct);
+      expect(req.request.url).toContain(id);
+      expect(req.request.method).toEqual('GET');
+    });
+
+    it('should return a 404 error', (doneFn) => {
+      const id = 'product-1';
+      const messageError = '404 message';
+      const returnError = {
+        status: HttpStatusCode.NotFound,
+        statusText: messageError,
+      };
+
+      productsService.getOne(id).subscribe({
+        error: (error) => {
+          expect(error).toEqual('El producto no existe');
+          doneFn();
+        },
+      });
+
+      const req = httpController.expectOne(`${apiUrl}/products/${id}`);
+      req.flush('', returnError);
+      expect(req.request.url).toContain(id);
+      expect(req.request.method).toEqual('GET');
+    });
+
+    it('should return a 409 error', (doneFn) => {
+      const id = 'product-1';
+      const messageError = '409 message';
+      const returnError = {
+        status: HttpStatusCode.Conflict,
+        statusText: messageError,
+      };
+
+      productsService.getOne(id).subscribe({
+        error: (error) => {
+          expect(error).toEqual('Algo esta fallando en el server');
+          doneFn();
+        },
+      });
+
+      const req = httpController.expectOne(`${apiUrl}/products/${id}`);
+      req.flush('', returnError);
+      expect(req.request.url).toContain(id);
+      expect(req.request.method).toEqual('GET');
+    });
+
   });
 });
