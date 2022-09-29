@@ -8,7 +8,11 @@ import {
   generateManyProducts,
   generateOneProduct
 } from './../models/product.mock';
-import { Product } from './../models/product.model';
+import {
+  CreateProductDTO,
+  Product,
+  UpdateProductDTO
+} from './../models/product.model';
 import { ProductsService } from './product.service';
 
 describe('ProductService', () => {
@@ -24,6 +28,10 @@ describe('ProductService', () => {
     });
     productsService = TestBed.inject(ProductsService);
     httpController = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpController.verify();
   });
 
   it('should be create', () => {
@@ -42,7 +50,6 @@ describe('ProductService', () => {
 
       const req = httpController.expectOne(`${apiUrl}/products`);
       req.flush(returnProducts);
-      httpController.verify();
     });
   });
 
@@ -57,7 +64,6 @@ describe('ProductService', () => {
 
       const req = httpController.expectOne(`${apiUrl}/products`);
       req.flush(returnProducts);
-      httpController.verify();
     });
 
     it('should return product list with taxes', (doneFn) => {
@@ -106,7 +112,68 @@ describe('ProductService', () => {
       const params = req.request.params;
       expect(params.get('limit')).toEqual(`${limit}`);
       expect(params.get('offset')).toEqual(`${offset}`);
-      httpController.verify();
+    });
+  });
+
+  describe('test for create', () => {
+    it('should return a new product', (doneFn) => {
+      const returnProduct = generateOneProduct();
+      const dto: CreateProductDTO = {
+        title: 'new product',
+        price: 100,
+        images: ['img'],
+        description: 'bla bla bla',
+        categoryId: 10,
+      };
+
+      productsService.create({ ...dto }).subscribe((data) => {
+        expect(data).toEqual(returnProduct);
+        doneFn();
+      });
+
+      const req = httpController.expectOne(`${apiUrl}/products`);
+      req.flush(returnProduct);
+      expect(req.request.body).toEqual(dto);
+      expect(req.request.method).toEqual('POST');
+    });
+  });
+
+  describe('test for update', () => {
+    it('should return a update product', (doneFn) => {
+      const returnProduct = generateOneProduct();
+      const id = 'product-1';
+      const dto: UpdateProductDTO = {
+        title: 'update product',
+        price: 500,
+      };
+
+      productsService.update(id, { ...dto }).subscribe((data) => {
+        expect(data).toEqual(returnProduct);
+        doneFn();
+      });
+
+      const req = httpController.expectOne(`${apiUrl}/products/${id}`);
+      req.flush(returnProduct);
+      expect(req.request.body).toEqual(dto);
+      expect(req.request.url).toContain(id);
+      expect(req.request.method).toEqual('PUT');
+    });
+  });
+
+  describe('test for delete', () => {
+    it('should return a delete product', (doneFn) => {
+      const response = true;
+      const id = 'product-1';
+
+      productsService.delete(id).subscribe((data) => {
+        expect(data).toEqual(response);
+        doneFn();
+      });
+
+      const req = httpController.expectOne(`${apiUrl}/products/${id}`);
+      req.flush(response);
+      expect(req.request.url).toContain(id);
+      expect(req.request.method).toEqual('DELETE');
     });
   });
 });
