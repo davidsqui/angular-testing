@@ -1,10 +1,13 @@
-import { generateManyProducts } from './../models/product.mock';
 import {
   HttpClientTestingModule,
   HttpTestingController
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from './../../environments/environment';
+import {
+  generateManyProducts,
+  generateOneProduct
+} from './../models/product.mock';
 import { Product } from './../models/product.model';
 import { ProductsService } from './product.service';
 
@@ -39,6 +42,70 @@ describe('ProductService', () => {
 
       const req = httpController.expectOne(`${apiUrl}/products`);
       req.flush(returnProducts);
+      httpController.verify();
+    });
+  });
+
+  describe('test for getAll', () => {
+    it('should return a product list', (doneFn) => {
+      const returnProducts: Product[] = generateManyProducts(2);
+
+      productsService.getAll().subscribe((data) => {
+        expect(data.length).toEqual(returnProducts.length);
+        doneFn();
+      });
+
+      const req = httpController.expectOne(`${apiUrl}/products`);
+      req.flush(returnProducts);
+      httpController.verify();
+    });
+
+    it('should return product list with taxes', (doneFn) => {
+      const returnProducts: Product[] = [
+        {
+          ...generateOneProduct(),
+          price: 100,
+        },
+        {
+          ...generateOneProduct(),
+          price: 200,
+        },
+        {
+          ...generateOneProduct(),
+          price: -100,
+        },
+      ];
+
+      productsService.getAll().subscribe((data) => {
+        expect(data.length).toEqual(returnProducts.length);
+        expect(data[0].taxes).toEqual(19);
+        expect(data[1].taxes).toEqual(38);
+        expect(data[2].taxes).toEqual(0);
+        doneFn();
+      });
+
+      const req = httpController.expectOne(`${apiUrl}/products`);
+      req.flush(returnProducts);
+      httpController.verify();
+    });
+
+    it('should send query params with limit 10 and offset 3', (doneFn) => {
+      const returnProducts: Product[] = generateManyProducts(2);
+      const limit = 10;
+      const offset = 3;
+
+      productsService.getAll(limit, offset).subscribe((data) => {
+        expect(data.length).toEqual(returnProducts.length);
+        doneFn();
+      });
+
+      const req = httpController.expectOne(
+        `${apiUrl}/products?limit=${limit}&offset=${offset}`
+      );
+      req.flush(returnProducts);
+      const params = req.request.params;
+      expect(params.get('limit')).toEqual(`${limit}`);
+      expect(params.get('offset')).toEqual(`${offset}`);
       httpController.verify();
     });
   });
